@@ -1,6 +1,7 @@
 import 'package:dcd_app/src/pages/widgets/button.dart';
 import 'package:dcd_app/src/routes/routes.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,6 +11,67 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  String? _host;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkSession();
+  }
+
+  Future<void> _checkSession() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _host = prefs.getString('host');
+    });
+
+    if (_host == null || _host!.isEmpty) {
+      _showHostDialog();
+    }
+  }
+
+  Future<void> _saveHost(String host) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('host', host);
+    setState(() {
+      _host = host;
+    });
+  }
+
+  void _showHostDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        TextEditingController hostController = TextEditingController();
+        return AlertDialog(
+          title: const Text('Enter Host'),
+          content: TextField(
+            controller: hostController,
+            decoration: const InputDecoration(hintText: 'Enter host'),
+          ),
+          actions: [
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Save'),
+              onPressed: () {
+                String host = hostController.text.trim();
+                if (host.isNotEmpty) {
+                  _saveHost(host);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,13 +82,13 @@ class _HomeState extends State<Home> {
           children: [
             const Column(
               children: [
-                Text(
-                  "DCD APP",
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                Image(
+                  image: AssetImage(
+                      'assets/images/logo.jpg'), // Path ke gambar di folder assets
                 ),
                 SizedBox(height: 10),
                 Text(
-                    "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.")
+                    "Aplikasi berbasis AI untuk mendiagnosis penyakit ayam seperti kolera, snot, dan lainnya dengan cepat dan mudah.")
               ],
             ),
             const SizedBox(
@@ -43,6 +105,13 @@ class _HomeState extends State<Home> {
               text: 'Gambar Tersimpan',
               onTap: () =>
                   Navigator.pushNamed(context, MyRoutes.gambarPenyakitAyam),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
+            Button(
+              text: 'Edit host',
+              onTap: () => _showHostDialog(),
             )
           ],
         ),
